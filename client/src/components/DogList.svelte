@@ -7,14 +7,39 @@
         breed: string;
     }
 
+    interface Breed {
+        id: number;
+        name: string;
+    }
+
     export let dogs: Dog[] = [];
+    let breeds: Breed[] = [];
     let loading = true;
     let error: string | null = null;
+
+    // Filter states
+    let selectedBreed: number | null = null;
+    let showAvailableOnly = false;
+
+    const fetchBreeds = async () => {
+        try {
+            const response = await fetch('/api/breeds');
+            if(response.ok) {
+                breeds = await response.json();
+            }
+        } catch (err) {
+            console.error('Failed to fetch breeds:', err);
+        }
+    };
 
     const fetchDogs = async () => {
         loading = true;
         try {
-            const response = await fetch('/api/dogs');
+            const params = new URLSearchParams();
+            if (selectedBreed) params.append('breed', selectedBreed.toString());
+            if (showAvailableOnly) params.append('available', 'true');
+
+            const response = await fetch(`/api/dogs?${params}`);
             if(response.ok) {
                 dogs = await response.json();
             } else {
@@ -27,7 +52,15 @@
         }
     };
 
+    // Watch for filter changes
+    $: {
+        if (typeof selectedBreed !== 'undefined' || typeof showAvailableOnly !== 'undefined') {
+            fetchDogs();
+        }
+    }
+
     onMount(() => {
+        fetchBreeds();
         fetchDogs();
     });
 </script>
@@ -35,6 +68,28 @@
 <div>
     <h2 class="text-2xl font-medium mb-6 text-slate-100">Available Dogs</h2>
     
+    <!-- Filter controls -->
+    <div class="mb-6 flex gap-4 items-center">
+        <select
+            class="bg-slate-800 text-slate-100 rounded-lg px-4 py-2 border border-slate-700"
+            bind:value={selectedBreed}
+        >
+            <option value={null}>All Breeds</option>
+            {#each breeds as breed}
+                <option value={breed.id}>{breed.name}</option>
+            {/each}
+        </select>
+
+        <label class="flex items-center gap-2 text-slate-100">
+            <input
+                type="checkbox"
+                bind:checked={showAvailableOnly}
+                class="form-checkbox bg-slate-800 border-slate-700 text-blue-500 rounded"
+            >
+            Show Available Only
+        </label>
+    </div>
+
     {#if loading}
         <!-- loading animation -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

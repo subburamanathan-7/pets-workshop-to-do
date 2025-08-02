@@ -1,6 +1,6 @@
 import os
 from typing import Dict, List, Any, Optional
-from flask import Flask, jsonify, Response
+from flask import Flask, jsonify, Response, request
 from models import init_db, db, Dog, Breed
 
 # Get the server directory path
@@ -15,11 +15,22 @@ init_db(app)
 
 @app.route('/api/dogs', methods=['GET'])
 def get_dogs() -> Response:
+    # Get query parameters
+    breed_id = request.args.get('breed', type=int)
+    available_only = request.args.get('available', type=bool)
+    
+    # Build base query
     query = db.session.query(
         Dog.id, 
         Dog.name, 
         Breed.name.label('breed')
     ).join(Breed, Dog.breed_id == Breed.id)
+    
+    # Apply filters if provided
+    if breed_id:
+        query = query.filter(Dog.breed_id == breed_id)
+    if available_only:
+        query = query.filter(Dog.status == 'AVAILABLE')
     
     dogs_query = query.all()
     
