@@ -40,6 +40,23 @@ class Dog(BaseModel):
         if description is not None:
             return self.validate_string_length('Description', description, min_length=10, allow_none=True)
         return description
+
+    @validates('age')
+    def validate_age(self, key, age):
+        if age is None:
+            raise ValueError("Age cannot be empty")
+            
+        try:
+            age = int(age)
+        except (TypeError, ValueError):
+            raise ValueError("Age must be a valid number")
+            
+        if age < 0:
+            raise ValueError("Age cannot be negative")
+        if age > 20:
+            raise ValueError("Age cannot be greater than 20 years")
+            
+        return age
     
     def __repr__(self):
         return f'<Dog {self.name}, ID: {self.id}, Status: {self.status.value}>'
