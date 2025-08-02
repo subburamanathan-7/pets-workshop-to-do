@@ -65,7 +65,27 @@ def get_dog(id: int) -> tuple[Response, int] | Response:
     
     return jsonify(dog)
 
-## HERE
+# Get all breeds
+"""
+    Fetches all pet breeds from the database and returns them as a JSON list.
+
+    Returns:
+        flask.Response: A JSON response containing a list of breed dictionaries,
+        each with 'id' and 'name' keys.
+    """
+@app.route('/api/breeds', methods=['GET'])
+def get_breeds():
+    breeds_query = db.session.query(Breed.id,Breed.name).all()
+
+    breed_list = [
+        {
+            'id' : breed.id,
+            'name' : breed.name
+        }
+        for breed in breeds_query
+    ]
+    return jsonify(breed_list)
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5100) # Port 5100 to avoid macOS conflicts
